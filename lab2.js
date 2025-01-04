@@ -1,53 +1,26 @@
+// Реалізація asyncMapPromise
 function asyncMapPromise(array, asyncOperation) {
-  return Promise.all(
-    array.map((item) => {
-      if (item <= 0) {
-        return Promise.reject(`Error: Array element ${item} must be greater than 0`);
-      }
-      return new Promise((resolve) => {
-         asyncOperation(item).then(resolve);
-      });
-    })
-  );
+  return Promise.all(array.map(asyncOperation));
 }
 
-// використання
+// Використання з Promise
 asyncMapPromise(
   [1, 2, 3],
-  (item) => new Promise(resolve => setTimeout(() => resolve(item * 2), 100))
-)
-  .then((result) => console.log('Promise Results:', result))
-  .catch((err) => console.error('Promise Error:', err));
+  (item) => new Promise((resolve) => setTimeout(() => resolve(item * 2), 100))
+).then((result) => console.log('Promise Results:', result)); // [2, 4, 6]
 
 asyncMapPromise(
-  [1, -2, 3],
-   (item) => new Promise((resolve, reject) => setTimeout(() => resolve(item * 2), 100))
-)
-  .then((result) => console.log('Promise Results:', result))
-  .catch((err) => console.error('Promise Error:', err));
+  [50 , -2, 7, 7, 7, 9],
+  (item) => new Promise((resolve) => setTimeout(() => resolve(item * 2), 100))
+).then((result) => console.log('Promise Results:', result)); // [2, -4, 6]
 
-// приклади await
+// Використання з async/await
 async function demoAwait() {
-  try {
-    const result = await asyncMapPromise(
-      [1, 2, 3],
-      (item) => new Promise(resolve => setTimeout(() => resolve(item * 2), 100))
-    );
-    console.log('Await Results:', result); // [2, 4, 6]
-  } catch (err) {
-    console.error('Await Error:', err);
-  }
-
-  //з помилкою
-  try {
-    const result = await asyncMapPromise(
-      [1, -2, 3],
-        (item) => new Promise(resolve => setTimeout(() => resolve(item * 2), 100))
-    );
-    console.log('Await Results:', result);
-  } catch (err) {
-    console.error('Await Error:', err); // Error: Array element -2 must be greater than 0
-  }
+  const result = await asyncMapPromise(
+    [1, 2, 3],
+    (item) => new Promise((resolve) => setTimeout(() => resolve(item * 2), 100))
+  );
+  console.log('Await Results:', result); // [2, 4, 6]
 }
 
 demoAwait();
