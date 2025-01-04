@@ -4,29 +4,29 @@
 const AbortController = global.AbortController || require('abort-controller');
 const readline = require('readline');
 
-function asyncOperation(item, delay, signal) {
-  return new Promise((resolve, reject) => {
-    if (item <= 0) {
-      reject(new Error(`Invalid number: ${item}`));
-      return;
-    }
+function asyncMapPromise(array, asyncOperation, signal) {
+  return Promise.all(
+    array.map((item) => asyncOperation(item, signal))
+  );
+}
 
+
+function asyncOperation(item, signal) {
+  return new Promise((resolve) => {
     const timeoutId = setTimeout(() => {
-      resolve(item * 2); 
-    }, delay);
+      resolve(item * 2);
+    }, 3000); 
 
     signal.addEventListener('abort', () => {
-      clearTimeout(timeoutId);
-      reject(new Error(`Operation aborted `));
+      clearTimeout(timeoutId); 
     });
   });
 }
 
-function asyncMap(array, delay) {
+function asyncMapWithAbort(array) {
   const controller = new AbortController();
   const signal = controller.signal;
 
-  // Можливість ручного завершення
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
@@ -34,29 +34,22 @@ function asyncMap(array, delay) {
 
   rl.on('line', (input) => {
     if (input.trim().toLowerCase() === 'ex') {
-      console.log('Manual exit ');
+      console.log('Manual exit');
       controller.abort();
-      rl.close(); 
+      rl.close();
     }
   });
 
-  return Promise.all(
-    array.map((item) => asyncOperation(item, delay, signal))
-  )
+  // Запуск обробки
+  return asyncMapPromise(array, asyncOperation, signal)
     .then((results) => {
       console.log('Results:', results);
-      console.log('Processing complete.');
-      rl.close(); 
+      rl.close();
     })
-    .catch((err) => {
-      console.error('Error:', err.message); 
-      console.log('Processing complete.');
-      rl.close(); 
+    .finally(() => {
+      process.exit(0);
     });
 }
 
-// Використання
-const numbers = [1, 2, 3, 4, 5, 6, 7]; 
-asyncMap(numbers, 3000).finally(() => {
-  process.exit(0); 
-});
+const numbers = [1, 2, 7, 4, 9, 6, 1]; 
+asyncMapWithAbort(numbers);
